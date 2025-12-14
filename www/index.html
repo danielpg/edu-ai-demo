@@ -43,7 +43,7 @@ var imageid = "";
 var res0 = "<option value='0'>--Seleccionar--</option>";
 var res1 = "<option value='1'>Completo</option><option value='2'>Incompleto</option>";
 var res2 = "<option value='3'>Rechazo</option><option value='4'>Local Cerrado</option><option value='5'>Local escolar inactivo sin justificación</option><option value='6'>Local escolar inactivo con justificación</option><option value='7'>Otro</option>";
-var desktop =  0;
+var desktop =  1;
 var codeversion = 2;
 var tmpload_data;
 var paso_counter = 0;
@@ -2504,6 +2504,18 @@ function paso_load_encuesta(i){
 		$( "#encuesta" + i + " form").unserialize(tmpload_data);
 		$("#paso").find("#paso_ok_" + i).show();
 }
+
+function paso_load_encuesta(i , dyndata ){
+		if(i <= ultimate_page){
+			form_refresh = 1;
+		} else {
+			form_refresh = 0;
+		}
+		$( "#encuesta" + i + " form").unserialize(dyndata);
+		$("#paso").find("#paso_ok_" + i).show();
+}
+
+
 
 function paso_load_encuesta3(i){
 	if(i == 1){ j=1;k=2;l=3 }
@@ -5122,11 +5134,109 @@ function create_panels(){
 	$("body").append(html);
 }
 
+let isRecording = false;
+var mediaRec;
+var recordedFilePath;
+
+function buttonAudio(obj){
+    if (!isRecording) {
+      // Start recording
+      recordAudio(obj);
+
+      $(obj).removeClass(" ui-icon-audio").addClass(" ui-icon-forbidden");
+      isRecording = true;
+    } else {
+
+      stopRecordAudio(obj);
+      $(obj).removeClass(" ui-icon-forbidden").addClass(" ui-icon-audio");
+
+      isRecording = false;
+    }
+} 
+
+
+// Dummy functions for demo
+function recordAudio(obj) {
+	recordedFilePath = cordova.file.dataDirectory + "myrecording.mp3";
+
+	mediaRec = new Media(recordedFilePath,
+		function() { console.log("Recording success"); },
+		function(err) { console.log("Recording error: " + err.code); }
+	);
+	mediaRec.startRecord();
+
+
+  console.log("Recording started...");
+}
+function stopRecordAudio(obj) {
+
+	mediaRec.stopRecord();
+	isRecording = false;
+
+    if (!recordedFilePath) {
+        alert("No recording found!");
+        return;
+    }
+
+    var options = new FileUploadOptions();
+    options.fileKey = "file";              // field name for the file
+    options.fileName = "myrecording.mp3";  // filename on the server
+    options.mimeType = "audio/mpeg";
+
+    // 👇 Add extra fields here
+    options.params = {
+        name: "Daniel Perales",
+        email: "daniel@example.com"
+    };
+
+    var ft = new FileTransfer();
+    var server = "https://your-api.com/upload";
+
+    ft.upload(recordedFilePath, encodeURI(server), 
+        function(result) {
+
+			console.log("Upload success: " + result.response);
+
+			var oneform = $(obj).parent().parent();
+			oneform.unserialize('01020000=SI');
+
+			$(obj).parent().parent().find("input, select, textarea").each(function () {
+				// Fallback for specific widget types if needed
+				if ($(this).is(":radio") || $(this).is(":checkbox")) {
+					$(this).checkboxradio("refresh");
+				} else if ($(this).is("select")) {
+					$(this).selectmenu("refresh");
+				} else if ($(this).is("[type=range]")) {
+					$(this).slider("refresh");
+				}
+			});
+
+        },
+        function(error) {
+            console.log("Upload error: " + JSON.stringify(error));
+        },
+        options
+    );
+
+	/*fetch("https://api.adostech.cc/test/encuesta")
+	.then(res => res.json())   // use .json() because body was JSON.stringify(...)
+	.then(data => {
+
+		console.log("Parsed JSON:", data);
+	})
+	.catch(err => console.error(err));*/
+
+  console.log("Recording stopped.");
+
+}
+
+
+
 </script>
 </head>
 <style>
 .bw {border: 2px solid white !important;}
-.ui-page .hpage1{background:url('images/logo_ministerio_educacion.png') no-repeat;background-color:#58585a;background-position:0px 0px}
+.ui-page .hpage1{background:url('img/logo_ministerio_educacion.png') no-repeat;background-color:#58585a;background-position:44px 0px}
 .cgreen{color:green}
 .cred{color:red}
 #login_error{color:red}
@@ -5137,18 +5247,18 @@ function create_panels(){
 
 #tnewniveles{display:none}
 .tnewnivel1{display:none}
-.tnewnivel2{display:none}
-.tnewnivel3{display:none}
+/**.tnewnivel2{display:none}
+.tnewnivel3{display:none}**/
 
 .ts1 tbody tr td .ui-field-contain{margin:0px}
 .ts1 tbody tr td ui-controlgroup, .ts1 tbody tr td  fieldset.ui-controlgroup { margin: 0; }
 .cs1{background:#ddd;border-radius:10px;padding:5px;font-weight:bold}
 
-.message{background-color:#E1EBF4;background-image:url('images/notify_notice.png');background-repeat:no-repeat;background-position:4px 6px;border:1px solid #C4D1D9 ;padding:5px;padding-left:25px;margin-left:0px;margin-right:0px;margin-bottom:3px;border-radius:6px }
-.box_notice{background-color:#E1EBF4;background-image:url('images/notify_notice.png');background-repeat:no-repeat;background-position:4px 6px;border:1px solid #C4D1D9 ;padding:5px;padding-left:25px;margin-left:0px;margin-right:0px;margin-bottom:3px;border-radius:6px }
-.box_error{background-color:#F8E3E0;background-image:url('images/notify_error.png');background-repeat:no-repeat;background-position:4px 6px;border:1px solid #E2C6C5 ;padding:5px;padding-left:25px;margin-left:0px;margin-right:0px;margin-bottom:3px;border-radius:6px  }
-.box_success{background-color:#E5EBC5;background-image:url('images/notify_success.png');background-repeat:no-repeat;background-position:4px 6px;border:1px solid #D4DAB6 ;padding:5px;padding-left:25px;margin-left:0px;margin-right:0px;margin-bottom:3px; border-radius:6px }
-.box_warning{background-color:#FAF3C5;background-image:url('images/notify_warning.png');background-repeat:no-repeat;background-position:4px 6px;border:1px solid #E4DBB0 ;padding:5px;padding-left:25px;margin-left:0px;margin-right:0px;margin-bottom:3px;border-radius:6px  }
+.message{background-color:#E1EBF4;background-image:url('img/notify_notice.png');background-repeat:no-repeat;background-position:4px 6px;border:1px solid #C4D1D9 ;padding:5px;padding-left:25px;margin-left:0px;margin-right:0px;margin-bottom:3px;border-radius:6px }
+.box_notice{background-color:#E1EBF4;background-image:url('img/notify_notice.png');background-repeat:no-repeat;background-position:4px 6px;border:1px solid #C4D1D9 ;padding:5px;padding-left:25px;margin-left:0px;margin-right:0px;margin-bottom:3px;border-radius:6px }
+.box_error{background-color:#F8E3E0;background-image:url('img/notify_error.png');background-repeat:no-repeat;background-position:4px 6px;border:1px solid #E2C6C5 ;padding:5px;padding-left:25px;margin-left:0px;margin-right:0px;margin-bottom:3px;border-radius:6px  }
+.box_success{background-color:#E5EBC5;background-image:url('img/notify_success.png');background-repeat:no-repeat;background-position:4px 6px;border:1px solid #D4DAB6 ;padding:5px;padding-left:25px;margin-left:0px;margin-right:0px;margin-bottom:3px; border-radius:6px }
+.box_warning{background-color:#FAF3C5;background-image:url('img/notify_warning.png');background-repeat:no-repeat;background-position:4px 6px;border:1px solid #E4DBB0 ;padding:5px;padding-left:25px;margin-left:0px;margin-right:0px;margin-bottom:3px;border-radius:6px  }
 
 .bline{white-space: normal !important; }
 
@@ -5164,13 +5274,22 @@ function create_panels(){
 .cbdd{padding: 8px;border-radius: 5px;padding-left: 14px;padding-right: 14px;}
 
 input[type=text]{width:100%}
+
+.ui-icon-forbidden {
+	border:2px solid red !important;
+}
+.ui-icon-forbidden:after {
+  background-color: red !important;   /* fill color of the icon */
+}
+
 </style>
 <body>
 	<div data-role="page" id="jqm-home" >
 		<div data-role="header" class="hpage1"  data-theme="b">
 		
-<h1 role="heading"> </h1>
-<a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
+		
+ 	    <h1 role="heading"> </h1>
+		<a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
 		<div data-role="content">
@@ -5505,9 +5624,9 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta1" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
-<a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
-
+			<a href="#recordBtn" onclick='return buttonAudio(this);' class="ui-btn-left ui-btn ui-icon-audio ui-btn-icon-notext ui-shadow ui-btn-corner-all bw" title="Record" data-role="button">Record</a>
+			<h1 role="heading"> Pagina 1 </h1>
+			<a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 		</div>
 		<div data-role="content">
 			<div class="ui-corner-all custom-corners">
@@ -5521,23 +5640,137 @@ input[type=text]{width:100%}
 				<button onclick="return get_gps();">Obtener Coordenadas</button>
 				<input id="00001900"  type="text" name="00001900" value="" readonly="readonly" data-wrapper-class="textgroup ui-btn" style="width:250px" >
 			</div>
-		</div><div id="div00001901" >
+		</div>
+		<!--div id="div00001901" >
 			<div style="float:left;width:20%;margin: .5em 2% 0 0;">Fotos</div>
 			<div style="float:left;width:70%">
-				<button class="ui-btn ui-btn-inline" onclick="return capturePhotoWithFile('1');">Tomar foto del frontis del local escolar    </button> <img id="fotoimage1" src="" style="width:60px;height:60px;" align="absmiddle" />  <br/>
-				<button class="ui-btn ui-btn-inline" onclick="return capturePhotoWithFile('2');">Tomar foto del frontis de L.E. con el Monitor(a)   </button> <img id="fotoimage2" src="" style="width:60px;height:60px;"  align="absmiddle"  />  
+				<button class="ui-btn ui-btn-inline" onclick="return capturePhotoWithFile('1');">Tomar foto del frontis del local escolar    </button> 
+				<img id="fotoimage1" src="" style="width:60px;height:60px;" align="absmiddle" >  <br/>
+				<button class="ui-btn ui-btn-inline" onclick="return capturePhotoWithFile('2');">Tomar foto del frontis de L.E. con el Monitor(a)   </button> 
+				<img id="fotoimage2" src="" style="width:60px;height:60px;"  align="absmiddle"  >  
 			</div>
 			<div style="clear:both"></div>
-		</div><div class="ff" id="div00000101" > <div data-role="fieldcontain"><label for='00000101'   >Departamento</label><select name='00000101' id='00000101'  ><option value='0'>--SELECCIONAR--</option></select></div></div><div class="ff" id="div00000200" > <div data-role="fieldcontain"><label for='00000200'   >Mes</label><select name='00000200' id='00000200'  ><option value='0'>--SELECCIONAR--</option></select></div></div><div class="ff" id="div00000100" > <div data-role="fieldcontain"><label for='00000100'   >Monitor(a)</label><select name='00000100' id='00000100'  ><option value='0'>--SELECCIONAR--</option></select></div></div><div class="ff" id="div00000300" > <div data-role="fieldcontain"><label for='00000300'   >Periodo</label><select name='00000300' id='00000300'  ><option value='0'>--SELECCIONAR--</option></select></div></div><div class="ff" id="div00000500" > <div data-role="fieldcontain"><label for='00000500'   >Día</label><select name='00000500' id='00000500'  ><option value='0'>--SELECCIONAR--</option></select></div></div><div class="ff" id="div00000400" > <div data-role="fieldcontain"><label for='00000400'   >Codigo de Local</label><select name='00000400' id='00000400'  ><option value='0'>--SELECCIONAR--</option></select></div></div><table id="tniveles" class="ts1"><thead><tr><th class=''>Codigo Modular</th><th class=''>Nivel</th><th class=''>El nivel esta activo?</th></tr></thead><tbody></tbody></table><input type="hidden" id="form_enc_id" name="00000001" value="0"/><input type="hidden"  id="00001941"   name="00001941" value="0"/><input type="hidden"  id="00001942"   name="00001942" value="0"/><input type="hidden"  id="00001943"   name="00001943" value="0"/><input type="hidden"  id="00001951"  name="00001951" value="0"/><input type="hidden"  id="00001952"  name="00001952" value="0"/><input type="hidden"  id="00001953"  name="00001953" value="0"/><input type="hidden"  id="00001970"  name="00001970" value="2" /><input type="hidden" id="nativo_1" name="00000041" value="0"/><input type="hidden"  id="nativo_2" name="00000042" value="0"/><input type="hidden"  id="nativo_3" name="00000043" value="0"/><input type="hidden" id="activenivel_1" name="00000051" value="0"/><input type="hidden" id="activenivel_2" name="00000052" value="0"/><input type="hidden" id="activenivel_3" name="00000053" value="0"/><input type="hidden" id="nivelcheck_1" name="00000291" value="0"/><input type="hidden" id="nivelcheck_2" name="00000292" value="0"/><input type="hidden" id="nivelcheck_3" name="00000293" value="0"/><div id="div00000401"  class=" ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal" ><legend>¿Existe un nivel Inicial?</legend><input type="radio" name="00000401" id="0000040101" value="SI"><label for="0000040101">SI</label><input type="radio" name="00000401" id="0000040102" value="NO"><label for="0000040102">NO</label></fieldset></div></div><div id="div00000402"  class=" ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal" ><legend>¿Existe un nivel Primaria?</legend><input type="radio" name="00000402" id="0000040201" value="SI"><label for="0000040201">SI</label><input type="radio" name="00000402" id="0000040202" value="NO"><label for="0000040202">NO</label></fieldset></div></div><div id="div00000403"  class=" ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal" ><legend>¿Existe un nivel Secundaria?</legend><input type="radio" name="00000403" id="0000040301" value="SI"><label for="0000040301">SI</label><input type="radio" name="00000403" id="0000040302" value="NO"><label for="0000040302">NO</label></fieldset></div></div><div id='testr'></div><table id="tnewniveles" class="ts1"><thead><tr><th class=''>Codigo Modular</th><th class=''>Nivel</th></tr></thead><tbody><tr class='tnewnivel1'><td><div id="div00004011"  class=" ff"  > <label for="00004011"  class="ui-hidden-accessible" ></label><input  type="number"   data-mini="true"   pattern="[0-9]*" name="00004011" id="00004011" value=""   /></div></td>
-<td>Inicial</td>
-<td></td>
-</tr><tr class='tnewnivel2'><td><div id="div00004012"  class=" ff"  > <label for="00004012"  class="ui-hidden-accessible" ></label><input  type="number"   data-mini="true"   pattern="[0-9]*" name="00004012" id="00004012" value=""   /></div></td>
-<td>Primaria</td>
-<td></td>
-</tr><tr class='tnewnivel3'><td><div id="div00004013"  class=" ff"  > <label for="00004013"  class="ui-hidden-accessible" ></label><input  type="number"   data-mini="true"   pattern="[0-9]*" name="00004013" id="00004013" value=""   /></div></td>
-<td>Secundaria</td>
-<td></td>
-</tr></tbody></table><input type="hidden" name="00000801" id="foto1" value=""><input type="hidden" name="00000802" id="foto2"  value="">
+		</div-->
+		<div class="ff" id="div00000101" > 
+			<div data-role="fieldcontain">
+				<label for='00000101'   >Departamento</label><select name='00000101' id='00000101'  ><option value='0'>--SELECCIONAR--</option></select>
+			</div>
+		</div>
+		<div class="ff" id="div00000200" > 
+			<div data-role="fieldcontain">
+				<label for='00000200'   >Mes</label><select name='00000200' id='00000200'  ><option value='0'>--SELECCIONAR--</option></select>
+			</div>
+		</div>
+		<div class="ff" id="div00000100" > <div data-role="fieldcontain">
+			<label for='00000100'   >Monitor(a)</label><select name='00000100' id='00000100'  >
+				<option value='0'>--SELECCIONAR--</option></select>
+			</div>
+		</div>
+		<div class="ff" id="div00000300" > <div data-role="fieldcontain">
+			<label for='00000300'   >Periodo</label>
+			<select name='00000300' id='00000300'  ><option value='0'>--SELECCIONAR--</option></select>
+		</div>
+	</div>
+	<div class="ff" id="div00000500" > 
+					<div data-role="fieldcontain">
+						<label for='00000500'   >Día</label>
+						<select name='00000500' id='00000500'  ><option value='0'>--SELECCIONAR--</option></select>
+					</div>
+				</div>
+			<div class="ff" id="div00000400" > 
+				<div data-role="fieldcontain">
+					<label for='00000400'   >Codigo de Local</label>
+					<select name='00000400' id='00000400'  ><option value='0'>--SELECCIONAR--</option></select>
+				</div>
+			</div>
+			<table id="tniveles" class="ts1">
+				<thead><tr><th class=''>Codigo Modular</th><th class=''>Nivel</th><th class=''>El nivel esta activo?</th></tr></thead>
+				<tbody></tbody>
+			</table>
+			<input type="hidden" id="form_enc_id" name="00000001" value="0"/>
+			<input type="hidden"  id="00001941"   name="00001941" value="0"/>
+			<input type="hidden"  id="00001942"   name="00001942" value="0"/>
+			<input type="hidden"  id="00001943"   name="00001943" value="0"/>
+			<input type="hidden"  id="00001951"  name="00001951" value="0"/>
+			<input type="hidden"  id="00001952"  name="00001952" value="0"/>
+			<input type="hidden"  id="00001953"  name="00001953" value="0"/>
+			<input type="hidden"  id="00001970"  name="00001970" value="2" />
+			<input type="hidden" id="nativo_1" name="00000041" value="0"/>
+			<input type="hidden"  id="nativo_2" name="00000042" value="0"/>
+			<input type="hidden"  id="nativo_3" name="00000043" value="0"/>
+			<input type="hidden" id="activenivel_1" name="00000051" value="0"/>
+			<input type="hidden" id="activenivel_2" name="00000052" value="1"/>
+			<input type="hidden" id="activenivel_3" name="00000053" value="1"/>
+			<input type="hidden" id="nivelcheck_1" name="00000291" value="0"/>
+			<input type="hidden" id="nivelcheck_2" name="00000292" value="1"/>
+			<input type="hidden" id="nivelcheck_3" name="00000293" value="1"/>
+			<div id="div00000401"  class=" ff"  > <div data-role="fieldcontain">
+				<fieldset data-role="controlgroup" data-type="horizontal" >
+					<legend>¿Existe un nivel Inicial?</legend>
+					<input type="radio" name="00000401" id="0000040101" value="SI">
+					<label for="0000040101">SI</label>
+					<input type="radio" name="00000401" id="0000040102" value="NO">
+					<label for="0000040102">NO</label>
+				</fieldset>
+			</div>
+		</div>
+		<div id="div00000402"  class=" ff"  > 
+			<div data-role="fieldcontain">
+				<fieldset data-role="controlgroup" data-type="horizontal" >
+					<legend>¿Existe un nivel Primaria?</legend>
+					<input type="radio" name="00000402" id="0000040201" value="SI">
+					<label for="0000040201">SI</label><input type="radio" name="00000402" id="0000040202" value="NO">
+					<label for="0000040202">NO</label></fieldset>
+				</div>
+			</div>
+			<div id="div00000403"  class=" ff"  > 
+				<div data-role="fieldcontain">
+					<fieldset data-role="controlgroup" data-type="horizontal" >
+						<legend>¿Existe un nivel Secundaria?</legend>
+						<input type="radio" name="00000403" id="0000040301" value="SI">
+						<label for="0000040301">SI</label>
+						<input type="radio" name="00000403" id="0000040302" value="NO">
+						<label for="0000040302">NO</label>
+					</fieldset>
+				</div>
+			</div>
+			<div id='testr'></div>
+					<table id="tnewniveles" class="ts1">
+						<thead><tr><th class=''>Codigo Modular</th><th class=''>Nivel</th></tr></thead>
+						<tbody>
+							<tr class='tnewnivel1'>
+								<td>
+									<div id="div00004011"  class=" ff"  > 
+										<label for="00004011"  class="ui-hidden-accessible" ></label>
+										<input  type="number"   data-mini="true"   pattern="[0-9]*" name="00004011" id="00004011" value=""   />
+									</div>
+								</td>
+								<td>Inicial</td>
+								<td></td>
+							</tr>
+							<tr class='tnewnivel2'>
+								<td>
+									<div id="div00004012"  class=" ff"  > 
+										<label for="00004012"  class="ui-hidden-accessible" ></label>
+										<input  type="number"   data-mini="true"   pattern="[0-9]*" name="00004012" id="00004012" value=""   />
+									</div>
+								</td>
+								<td>Primaria</td>
+								<td></td>
+							</tr>
+							<tr class='tnewnivel3'>
+								<td>
+									<div id="div00004013"  class=" ff"  > 
+										<label for="00004013"  class="ui-hidden-accessible" ></label>
+										<input  type="number"   data-mini="true"   pattern="[0-9]*" name="00004013" id="00004013" value=""   />
+									</div>
+								</td>
+								<td>Secundaria</td>
+								<td></td>
+							</tr>
+						</tbody>
+</table>
+<input type="hidden" name="00000801" id="foto1" value=""><input type="hidden" name="00000802" id="foto2"  value="">
 				</div>				
 			</div>
 			<a href="#" onclick="return nextpage_encuesta(2);"  class="sgte ui-btn ui-icon-carat-r ui-btn-icon-right">Siguiente</a>
@@ -5549,8 +5782,9 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta2" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
-<a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
+		<a href="#recordBtn" onclick='return buttonAudio(this);' class="ui-btn-left ui-btn ui-icon-audio ui-btn-icon-notext ui-shadow ui-btn-corner-all bw" title="Record" data-role="button">Record</a>
+		<h1 role="heading"> Pagina 2 </h1>
+		<a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
 		<div data-role="content">
@@ -5571,7 +5805,8 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta3" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+			<a href="#recordBtn" onclick='return buttonAudio(this);' class="ui-btn-left ui-btn ui-icon-audio ui-btn-icon-notext ui-shadow ui-btn-corner-all bw" title="Record" data-role="button">Record</a>
+<h1 role="heading"> Pagina 3 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -5602,7 +5837,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta4" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 4 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -5638,7 +5873,8 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta5" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+			<a href="#recordBtn" onclick='return buttonAudio(this);' class="ui-btn-left ui-btn ui-icon-audio ui-btn-icon-notext ui-shadow ui-btn-corner-all bw" title="Record" data-role="button">Record</a>
+<h1 role="heading"> Pagina 5 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -5648,7 +5884,116 @@ input[type=text]{width:100%}
 					<h3>III. PREGUNTAS AL DIRECTOR O INFORMANTE </h3>
 				</div>
 				<div class="ui-body ui-body-a">
-					<p>Monitor, pregunte por la presencia del(los) Director(es) de la IE y según sea el caso responda las siguientes preguntas:</p><div id="div01020000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>1. ¿Existe un Director asignado a esta institución educativa?</legend><input type="radio" name="01020000" id="0102000001" value="SI"><label for="0102000001">SI</label><input type="radio" name="01020000" id="0102000002" value="NO"><label for="0102000002">NO</label></fieldset></div><div id="div01010000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>2. ¿El(los) director(es) está(n) presente(s)?</legend><input type="radio" name="01010000" id="0101000001" value="SI"><label for="0101000001">SI</label><input type="radio" name="01010000" id="0101000002" value="NO"><label for="0101000002">NO</label></fieldset></div><div id="div02010000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>3. ¿Qué cargo desempeña usted en el local escolar?</legend><input type="radio" name="02010000" id="0201000001" value="Subdirector"><label for="0201000001">Subdirector</label><input type="radio" name="02010000" id="0201000002" value="Subdirector Administrativo"><label for="0201000002">Subdirector Administrativo</label><input type="radio" name="02010000" id="0201000003" value="Coordinador Académico"><label for="0201000003">Coordinador Académico</label><input type="radio" name="02010000" id="0201000004" value="Docente encargado"><label for="0201000004">Docente encargado</label><input type="radio" name="02010000" id="0201000005" value="Otro"><label for="0201000005">Otro</label></fieldset></div><div id="div02010100"  class=" ff"  > <div data-role="fieldcontain"><label for="02010100"   >(Otro) Especificar:</label><input   data-mini="true"   type="text" name="02010100" id="02010100" value=""   ></div></div><div id="div03010000"  class=" ff"  > <label for="03010000"   >4. ¿Cuáles son sus apellidos y nombres? (Informante)</label><input   data-mini="true"   type="text" name="03010000" id="03010000" value=""   ></div><div id="div04010000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>5. Existe un Director por:</legend><input type="radio" name="04010000" id="0401000001" value="LOCAL ESCOLAR"><label for="0401000001">LOCAL ESCOLAR</label><input type="radio" name="04010000" id="0401000002" value="NIVEL EDUCATIVO"><label for="0401000002">NIVEL EDUCATIVO</label></fieldset></div><div id="div05010000"  class=" ff"  > <label for="05010000"   >6. ¿Cuáles son los apellidos y nombres del director?</label><input   data-mini="true"   type="text" name="05010000" id="05010000" value=""   ></div><div id="div06010000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>7. ¿Género del director?:</legend><input type="radio" name="06010000" id="0601000001" value="MASCULINO"><label for="0601000001">MASCULINO</label><input type="radio" name="06010000" id="0601000002" value="FEMENINO"><label for="0601000002">FEMENINO</label></fieldset></div><div id="div07010000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>8. ¿Cuál es la condición laboral del director?</legend><input type="radio" name="07010000" id="0701000001" value="NOMBRADO"><label for="0701000001">NOMBRADO</label><input type="radio" name="07010000" id="0701000002" value="CONTRATADO"><label for="0701000002">CONTRATADO</label></fieldset></div><div id="div07010200"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>8.A ¿Cuál es su situación laboral?</legend><input type="radio" name="07010200" id="0701020001" value="Ratificado por evaluación excepcional 2014"><label for="0701020001">Ratificado por evaluación excepcional 2014</label><input type="radio" name="07010200" id="0701020002" value="Asignado por evaluación de acceso 2014"><label for="0701020002">Asignado por evaluación de acceso 2014</label><input type="radio" name="07010200" id="0701020003" value="Encargado en la función"><label for="0701020003">Encargado en la función</label><input type="radio" name="07010200" id="0701020004" value="Otro"><label for="0701020004">Otro</label></fieldset></div><div id="div07010100"  class=" ff"  > <div data-role="fieldcontain"><label for="07010100"   >(Otro) Especificar:</label><input   data-mini="true"   type="text" name="07010100" id="07010100" value=""   ></div></div><div class='efi efp'><div id="div07020100"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>9. ¿Tiene Ud. aula o sección a cargo?</legend><input type="radio" name="07020100" id="0702010001" value="SI"><label for="0702010001">SI</label><input type="radio" name="07020100" id="0702010002" value="NO"><label for="0702010002">NO</label></fieldset></div></div><div class='efs'><div id="div07020200"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>9.A ¿Tiene Ud. carga horaria?</legend><input type="radio" name="07020200" id="0702020001" value="SI"><label for="0702020001">SI</label><input type="radio" name="07020200" id="0702020002" value="NO"><label for="0702020002">NO</label></fieldset></div><div id="div07020300"  class=" ff"  > <label for="07020300"   >9.B ¿Cuántas horas de dictado tiene usted bajo su responsabilidad?</label><input  type="number"   data-mini="true"   pattern="[0-9]*" name="07020300" id="07020300" value=""   /></div></div><div id="div08010000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>10. ¿El local escolar cuenta con un espacio físico para la oficina de dirección?</legend><input type="radio" name="08010000" id="0801000001" value="SI"><label for="0801000001">SI</label><input type="radio" name="08010000" id="0801000002" value="NO"><label for="0801000002">NO</label></fieldset></div><div id='div09000000'><p>11. Por nivel educativo, indique usted la información sobre los directores:</p><table  class="ts1"><thead><tr><th class=''>Nivel</th><th class=''>11.A Apellidos y Nombres</th><th class=''>11.B Género</th><th class=''>11.C Condición Laboral</th></tr></thead><tbody><tr class='efi'><td>Inicial</td>
+					<p>Monitor, pregunte por la presencia del(los) Director(es) de la IE y según sea el caso responda las siguientes preguntas:</p>
+					<div id="div01020000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" >
+						<legend>1. ¿Existe un Director asignado a esta institución educativa?</legend>
+						<input type="radio" name="01020000" id="0102000001" value="SI"><label for="0102000001">SI</label>
+						<input type="radio" name="01020000" id="0102000002" value="NO"><label for="0102000002">NO</label>
+					</fieldset></div>
+					<div id="div01010000"  class=" ff"  > 
+						<fieldset data-role="controlgroup" data-type="horizontal" >
+							<legend>2. ¿El(los) director(es) está(n) presente(s)?</legend>
+							<input type="radio" name="01010000" id="0101000001" value="SI">
+							<label for="0101000001">SI</label>
+							<input type="radio" name="01010000" id="0101000002" value="NO">
+							<label for="0101000002">NO</label>
+						</fieldset>
+					</div>
+					<div id="div02010000"  class=" ff"  > 
+						<fieldset data-role="controlgroup" data-type="horizontal" >
+							<legend>3. ¿Qué cargo desempeña usted en el local escolar?</legend>
+							<input type="radio" name="02010000" id="0201000001" value="Subdirector">
+							<label for="0201000001">Subdirector</label>
+							<input type="radio" name="02010000" id="0201000002" value="Subdirector Administrativo">
+							<label for="0201000002">Subdirector Administrativo</label>
+							<input type="radio" name="02010000" id="0201000003" value="Coordinador Académico">
+							<label for="0201000003">Coordinador Académico</label>
+							<input type="radio" name="02010000" id="0201000004" value="Docente encargado">
+							<label for="0201000004">Docente encargado</label>
+							<input type="radio" name="02010000" id="0201000005" value="Otro">
+							<label for="0201000005">Otro</label>
+						</fieldset>
+					</div>
+					<div id="div02010100"  class=" ff"  > 
+						<div data-role="fieldcontain">
+							<label for="02010100"   >(Otro) Especificar:</label>
+							<input   data-mini="true"   type="text" name="02010100" id="02010100" value=""   >
+						</div>
+					</div>
+					<div id="div03010000"  class=" ff"  > 
+						<label for="03010000"   >4. ¿Cuáles son sus apellidos y nombres? (Informante)</label>
+						<input   data-mini="true"   type="text" name="03010000" id="03010000" value=""   >
+					</div>
+					<div id="div04010000"  class=" ff"  > 
+						<fieldset data-role="controlgroup" data-type="horizontal" >
+							<legend>5. Existe un Director por:</legend>
+							<input type="radio" name="04010000" id="0401000001" value="LOCAL ESCOLAR">
+							<label for="0401000001">LOCAL ESCOLAR</label>
+							<input type="radio" name="04010000" id="0401000002" value="NIVEL EDUCATIVO">
+							<label for="0401000002">NIVEL EDUCATIVO</label>
+						</fieldset>
+					</div>
+					<div id="div05010000"  class=" ff"  > 
+						<label for="05010000"   >6. ¿Cuáles son los apellidos y nombres del director?</label>
+						<input   data-mini="true"   type="text" name="05010000" id="05010000" value=""   >
+					</div><div id="div06010000"  class=" ff"  > 
+						<fieldset data-role="controlgroup" data-type="horizontal" >
+							<legend>7. ¿Género del director?:</legend>
+							<input type="radio" name="06010000" id="0601000001" value="MASCULINO">
+							<label for="0601000001">MASCULINO</label>
+							<input type="radio" name="06010000" id="0601000002" value="FEMENINO">
+							<label for="0601000002">FEMENINO</label>
+						</fieldset>
+					</div>
+					<div id="div07010000"  class=" ff"  > 
+						<fieldset data-role="controlgroup" data-type="horizontal" >
+							<legend>8. ¿Cuál es la condición laboral del director?</legend>
+							<input type="radio" name="07010000" id="0701000001" value="NOMBRADO">
+							<label for="0701000001">NOMBRADO</label><input type="radio" name="07010000" id="0701000002" value="CONTRATADO">
+							<label for="0701000002">CONTRATADO</label></fieldset></div><div id="div07010200"  class=" ff"  > 
+								<fieldset data-role="controlgroup" data-type="horizontal" >
+									<legend>8.A ¿Cuál es su situación laboral?</legend>
+									<input type="radio" name="07010200" id="0701020001" value="Ratificado por evaluación excepcional 2014">
+									<label for="0701020001">Ratificado por evaluación excepcional 2014</label>
+									<input type="radio" name="07010200" id="0701020002" value="Asignado por evaluación de acceso 2014">
+									<label for="0701020002">Asignado por evaluación de acceso 2014</label>
+									<input type="radio" name="07010200" id="0701020003" value="Encargado en la función">
+									<label for="0701020003">Encargado en la función</label>
+									<input type="radio" name="07010200" id="0701020004" value="Otro"><label for="0701020004">Otro</label>
+								</fieldset>
+							</div>
+							<div id="div07010100"  class=" ff"  > <div data-role="fieldcontain">
+								<label for="07010100"   >(Otro) Especificar:</label>
+								<input   data-mini="true"   type="text" name="07010100" id="07010100" value=""   >
+							</div>
+						</div>
+						<div class='efi efp'><div id="div07020100"  class=" ff"  > 
+							<fieldset data-role="controlgroup" data-type="horizontal" >
+								<legend>9. ¿Tiene Ud. aula o sección a cargo?</legend>
+								<input type="radio" name="07020100" id="0702010001" value="SI">
+								<label for="0702010001">SI</label><input type="radio" name="07020100" id="0702010002" value="NO">
+								<label for="0702010002">NO</label>
+							</fieldset>
+						</div>
+					</div>
+					<div class='efs'>
+						<div id="div07020200"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" >
+							<legend>9.A ¿Tiene Ud. carga horaria?</legend>
+							<input type="radio" name="07020200" id="0702020001" value="SI">
+							<label for="0702020001">SI</label><input type="radio" name="07020200" id="0702020002" value="NO">
+							<label for="0702020002">NO</label></fieldset></div><div id="div07020300"  class=" ff"  > 
+								<label for="07020300"   >9.B ¿Cuántas horas de dictado tiene usted bajo su responsabilidad?</label>
+								<input  type="number"   data-mini="true"   pattern="[0-9]*" name="07020300" id="07020300" value=""   /></div></div>
+								<div id="div08010000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" >
+									<legend>10. ¿El local escolar cuenta con un espacio físico para la oficina de dirección?</legend>
+									<input type="radio" name="08010000" id="0801000001" value="SI"><label for="0801000001">SI</label>
+									<input type="radio" name="08010000" id="0801000002" value="NO"><label for="0801000002">NO</label></fieldset></div>
+
+
+									<!--div id='div09000000'>
+										<p>11. Por nivel educativo, indique usted la información sobre los directores:</p>
+
+							<table  class="ts1"><thead><tr><th class=''>Nivel</th><th class=''>11.A Apellidos y Nombres</th><th class=''>11.B Género</th><th class=''>11.C Condición Laboral</th></tr></thead><tbody><tr class='efi'><td>Inicial</td>
 <td><div id="div09010001"  class=" ff"  > <label for="09010001"  class="ui-hidden-accessible" ></label><input   data-mini="true"   type="text" name="09010001" id="09010001" value=""   ></div></td>
 <td><div id="div09020001"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend></legend><input type="radio" name="09020001" id="0902000101" value="MASCULINO"><label for="0902000101">MASCULINO</label><input type="radio" name="09020001" id="0902000102" value="FEMENINO"><label for="0902000102">FEMENINO</label></fieldset></div></td>
 <td><div id="div09030001"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend></legend><input type="radio" name="09030001" id="0903000101" value="NOMBRADO"><label for="0903000101">NOMBRADO</label><input type="radio" name="09030001" id="0903000102" value="CONTRATADO"><label for="0903000102">CONTRATADO</label></fieldset></div></td>
@@ -5660,7 +6005,9 @@ input[type=text]{width:100%}
 <td><div id="div09010003"  class=" ff"  > <label for="09010003"  class="ui-hidden-accessible" ></label><input   data-mini="true"   type="text" name="09010003" id="09010003" value=""   ></div></td>
 <td><div id="div09020003"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend></legend><input type="radio" name="09020003" id="0902000301" value="MASCULINO"><label for="0902000301">MASCULINO</label><input type="radio" name="09020003" id="0902000302" value="FEMENINO"><label for="0902000302">FEMENINO</label></fieldset></div></td>
 <td><div id="div09030003"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend></legend><input type="radio" name="09030003" id="0903000301" value="NOMBRADO"><label for="0903000301">NOMBRADO</label><input type="radio" name="09030003" id="0903000302" value="CONTRATADO"><label for="0903000302">CONTRATADO</label></fieldset></div></td>
-</tr></tbody></table><table  class="ts1"><thead><tr><th class=''>Nivel</th><th class=''>11.D ¿Cuál es su situación laboral?</th><th class=''>11.E ¿Tiene Ud. aula a cargo?</th><th class=''>11.F ¿Tiene Ud. carga horaria?</th></tr></thead><tbody><tr class='efi'><td>Inicial</td>
+</tr></tbody>
+</table>
+<table  class="ts1"><thead><tr><th class=''>Nivel</th><th class=''>11.D ¿Cuál es su situación laboral?</th><th class=''>11.E ¿Tiene Ud. aula a cargo?</th><th class=''>11.F ¿Tiene Ud. carga horaria?</th></tr></thead><tbody><tr class='efi'><td>Inicial</td>
 <td><div class="ff" id="div09040001" > <label for='09040001'  class="ui-hidden-accessible" ></label><select name='09040001' id='09040001'  data-mini="true"   ><option value='--SELECCIONAR--'>--SELECCIONAR--</option><option value='Ratificado por evaluación excepcional 2014'>Ratificado por evaluación excepcional 2014</option><option value='Asignado por evaluación de acceso 2014'>Asignado por evaluación de acceso 2014</option><option value='Encargado en la función'>Encargado en la función</option><option value='Otro'>Otro</option></select></div></td>
 <td><div id="div09050001"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend></legend><input type="radio" name="09050001" id="0905000101" value="SI"><label for="0905000101">SI</label><input type="radio" name="09050001" id="0905000102" value="NO"><label for="0905000102">NO</label></fieldset></div></td>
 <td></td>
@@ -5671,8 +6018,18 @@ input[type=text]{width:100%}
 </tr><tr class='efs'><td>Secundaria</td>
 <td><div class="ff" id="div09040003" > <label for='09040003'  class="ui-hidden-accessible" ></label><select name='09040003' id='09040003'  data-mini="true"   ><option value='--SELECCIONAR--'>--SELECCIONAR--</option><option value='Ratificado por evaluación excepcional 2014'>Ratificado por evaluación excepcional 2014</option><option value='Asignado por evaluación de acceso 2014'>Asignado por evaluación de acceso 2014</option><option value='Encargado en la función'>Encargado en la función</option><option value='Otro'>Otro</option></select></div></td>
 <td></td>
-<td><div id="div09060003"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend></legend><input type="radio" name="09060003" id="0906000301" value="SI"><label for="0906000301">SI</label><input type="radio" name="09060003" id="0906000302" value="NO"><label for="0906000302">NO</label></fieldset></div></td>
-</tr></tbody></table><table  class="ts1"><thead><tr><th class=''>Nivel</th><th class=''>11.G ¿Cuántas horas de dictado tiene bajo su responsabilidad?</th><th class=''>11.H ¿El Director esta presente?</th></tr></thead><tbody><tr class='efi'><td>Inicial</td>
+<td>
+	<div id="div09060003"  class=" ff"  > 
+	
+	<fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend></legend>
+		<input type="radio" name="09060003" id="0906000301" value="SI"><label for="0906000301">SI</label><input type="radio" name="09060003" id="0906000302" value="NO"><label for="0906000302">NO</label></fieldset></div></td>
+</tr></tbody>
+</table>
+
+<table  class="ts1"><thead><tr><th class=''>Nivel</th>
+	<th class=''>
+	11.G ¿Cuántas horas de dictado tiene bajo su responsabilidad?</th><th class=''>11.H ¿El Director esta presente?</th></tr></thead>
+	<tbody><tr class='efi'><td>Inicial</td>
 <td></td>
 <td><div id="div09080001"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend></legend><input type="radio" name="09080001" id="0908000101" value="SI"><label for="0908000101">SI</label><input type="radio" name="09080001" id="0908000102" value="NO"><label for="0908000102">NO</label></fieldset></div></td>
 </tr><tr class='efp'><td>Primaria</td>
@@ -5681,7 +6038,10 @@ input[type=text]{width:100%}
 </tr><tr class='efs'><td>Secundaria</td>
 <td><div id="div09070003"  class=" ff"  > <label for="09070003"  class="ui-hidden-accessible" ></label><input  type="number"   data-mini="true"   pattern="[0-9]*" name="09070003" id="09070003" value=""   /></div></td>
 <td><div id="div09080003"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend></legend><input type="radio" name="09080003" id="0908000301" value="SI"><label for="0908000301">SI</label><input type="radio" name="09080003" id="0908000302" value="NO"><label for="0908000302">NO</label></fieldset></div></td>
-</tr></tbody></table></div>
+</tr></tbody>
+</table>
+
+</div-->
 				</div>				
 			</div>
 			<a href="#" onclick="return nextpage_encuesta(6);"  class="sgte ui-btn ui-icon-carat-r ui-btn-icon-right">Siguiente</a>
@@ -5693,7 +6053,8 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta6" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<a href="#recordBtn" onclick='return buttonAudio(this);' class="ui-btn-left ui-btn ui-icon-audio ui-btn-icon-notext ui-shadow ui-btn-corner-all bw" title="Record" data-role="button">Record</a>
+<h1 role="heading"> Pagina 6 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -5703,7 +6064,157 @@ input[type=text]{width:100%}
 					<h3>III. PREGUNTAS AL DIRECTOR O INFORMANTE </h3>
 				</div>
 				<div class="ui-body ui-body-a">
-					<div id='div10000000'><p>12. Por nivel educativo ¿El local escolar cuenta con un espacio físico para las direcciones de la IE de:</p><div id="div10010000"  class="efi ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal" ><legend>Inicial</legend><input type="radio" name="10010000" id="1001000001" value="SI"><label for="1001000001">SI</label><input type="radio" name="10010000" id="1001000002" value="NO"><label for="1001000002">NO</label></fieldset></div></div><div id="div10020000"  class="efp ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal" ><legend>Primaria</legend><input type="radio" name="10020000" id="1002000001" value="SI"><label for="1002000001">SI</label><input type="radio" name="10020000" id="1002000002" value="NO"><label for="1002000002">NO</label></fieldset></div></div><div id="div10030000"  class="efs ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal" ><legend>Secundaria</legend><input type="radio" name="10030000" id="1003000001" value="SI"><label for="1003000001">SI</label><input type="radio" name="10030000" id="1003000002" value="NO"><label for="1003000002">NO</label></fieldset></div></div></div><p>13. En los últimos 12 meses la IE ¿Ha recibido visitas de inspección/supervisión por parte de la UGEL?</p><div id="div10040001"  class="efi ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal" ><legend>Inicial</legend><input type="radio" name="10040001" id="1004000101" value="SI"><label for="1004000101">SI</label><input type="radio" name="10040001" id="1004000102" value="NO"><label for="1004000102">NO</label></fieldset></div></div><div id="div10040002"  class="efp ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal" ><legend>Primaria</legend><input type="radio" name="10040002" id="1004000201" value="SI"><label for="1004000201">SI</label><input type="radio" name="10040002" id="1004000202" value="NO"><label for="1004000202">NO</label></fieldset></div></div><div id="div10040003"  class="efs ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal" ><legend>Secundaria</legend><input type="radio" name="10040003" id="1004000301" value="SI"><label for="1004000301">SI</label><input type="radio" name="10040003" id="1004000302" value="NO"><label for="1004000302">NO</label></fieldset></div></div><p>14. ¿Cuántas visitas ha recibido?</p><div id="div10050011"  class="efi ff"  > <div data-role="fieldcontain"><label for="10050011"   >Inicial</label><input  type="number"   pattern="[0-9]*" name="10050011" id="10050011" value=""   /></div></div><div id="div10050012"  class="efp ff"  > <div data-role="fieldcontain"><label for="10050012"   >Primaria</label><input  type="number"   pattern="[0-9]*" name="10050012" id="10050012" value=""   /></div></div><div id="div10050013"  class="efs ff"  > <div data-role="fieldcontain"><label for="10050013"   >Secundaria</label><input  type="number"   pattern="[0-9]*" name="10050013" id="10050013" value=""   /></div></div><div id="div11000000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>15. Considera usted que las condiciones de trabajo son:</legend><input type="radio" name="11000000" id="1100000001" value="MUY BUENAS"><label for="1100000001">MUY BUENAS</label><input type="radio" name="11000000" id="1100000002" value="BUENAS"><label for="1100000002">BUENAS</label><input type="radio" name="11000000" id="1100000003" value="REGULAR"><label for="1100000003">REGULAR</label><input type="radio" name="11000000" id="1100000004" value="MALO"><label for="1100000004">MALO</label><input type="radio" name="11000000" id="1100000005" value="MUY MALO"><label for="1100000005">MUY MALO</label></fieldset></div><div id='div11010000'><p>15.A. ¿Considera usted que las condiciones de su trabajo son?:</p><table  class="ts1"><thead><tr><th class='efi'>Inicial</th><th class='efp'>Primaria</th><th class='efs'>Secundaria</th></tr></thead><tbody><tr><td class="efi"><div id="div11010001"  class=" ff"  > <fieldset data-role="controlgroup"  data-mini="true"   ><legend></legend><input type="radio" name="11010001" id="1101000101" value="MUY BUENAS"><label for="1101000101">MUY BUENAS</label><input type="radio" name="11010001" id="1101000102" value="BUENAS"><label for="1101000102">BUENAS</label><input type="radio" name="11010001" id="1101000103" value="REGULAR"><label for="1101000103">REGULAR</label><input type="radio" name="11010001" id="1101000104" value="MALO"><label for="1101000104">MALO</label><input type="radio" name="11010001" id="1101000105" value="MUY MALO"><label for="1101000105">MUY MALO</label></fieldset></div></td><td class="efp"><div id="div11010002"  class=" ff"  > <fieldset data-role="controlgroup"  data-mini="true"   ><legend></legend><input type="radio" name="11010002" id="1101000201" value="MUY BUENAS"><label for="1101000201">MUY BUENAS</label><input type="radio" name="11010002" id="1101000202" value="BUENAS"><label for="1101000202">BUENAS</label><input type="radio" name="11010002" id="1101000203" value="REGULAR"><label for="1101000203">REGULAR</label><input type="radio" name="11010002" id="1101000204" value="MALO"><label for="1101000204">MALO</label><input type="radio" name="11010002" id="1101000205" value="MUY MALO"><label for="1101000205">MUY MALO</label></fieldset></div></td><td class="efs"><div id="div11010003"  class=" ff"  > <fieldset data-role="controlgroup"  data-mini="true"   ><legend></legend><input type="radio" name="11010003" id="1101000301" value="MUY BUENAS"><label for="1101000301">MUY BUENAS</label><input type="radio" name="11010003" id="1101000302" value="BUENAS"><label for="1101000302">BUENAS</label><input type="radio" name="11010003" id="1101000303" value="REGULAR"><label for="1101000303">REGULAR</label><input type="radio" name="11010003" id="1101000304" value="MALO"><label for="1101000304">MALO</label><input type="radio" name="11010003" id="1101000305" value="MUY MALO"><label for="1101000305">MUY MALO</label></fieldset></div></td></tr></tbody></table></div><div id="div11020000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>16. ¿Qué tan satisfecho se encuentra Ud con su trabajo como director?</legend><input type="radio" name="11020000" id="1102000001" value="MUY SATISFECHO"><label for="1102000001">MUY SATISFECHO</label><input type="radio" name="11020000" id="1102000002" value="SATISFECHO"><label for="1102000002">SATISFECHO</label><input type="radio" name="11020000" id="1102000003" value="POCO SATISFECHO"><label for="1102000003">POCO SATISFECHO</label><input type="radio" name="11020000" id="1102000004" value="NADA SATISFECHO"><label for="1102000004">NADA SATISFECHO</label></fieldset></div><div id='div11030000'><p>16.A. ¿Que tan satisfecho se encuentra Ud con su trabajo como director?</p><table  class="ts1"><thead><tr><th class='efi'>Inicial</th><th class='efp'>Primaria</th><th class='efs'>Secundaria</th></tr></thead><tbody><tr><td class="efi"><div id="div11030001"  class=" ff"  > <fieldset data-role="controlgroup"  data-mini="true"   ><legend></legend><input type="radio" name="11030001" id="1103000101" value="MUY SATISFECHO"><label for="1103000101">MUY SATISFECHO</label><input type="radio" name="11030001" id="1103000102" value="SATISFECHO"><label for="1103000102">SATISFECHO</label><input type="radio" name="11030001" id="1103000103" value="POCO SATISFECHO"><label for="1103000103">POCO SATISFECHO</label><input type="radio" name="11030001" id="1103000104" value="NADA SATISFECHO"><label for="1103000104">NADA SATISFECHO</label></fieldset></div></td><td class="efp"><div id="div11030002"  class=" ff"  > <fieldset data-role="controlgroup"  data-mini="true"   ><legend></legend><input type="radio" name="11030002" id="1103000201" value="MUY SATISFECHO"><label for="1103000201">MUY SATISFECHO</label><input type="radio" name="11030002" id="1103000202" value="SATISFECHO"><label for="1103000202">SATISFECHO</label><input type="radio" name="11030002" id="1103000203" value="POCO SATISFECHO"><label for="1103000203">POCO SATISFECHO</label><input type="radio" name="11030002" id="1103000204" value="NADA SATISFECHO"><label for="1103000204">NADA SATISFECHO</label></fieldset></div></td><td class="efs"><div id="div11030003"  class=" ff"  > <fieldset data-role="controlgroup"  data-mini="true"   ><legend></legend><input type="radio" name="11030003" id="1103000301" value="MUY SATISFECHO"><label for="1103000301">MUY SATISFECHO</label><input type="radio" name="11030003" id="1103000302" value="SATISFECHO"><label for="1103000302">SATISFECHO</label><input type="radio" name="11030003" id="1103000303" value="POCO SATISFECHO"><label for="1103000303">POCO SATISFECHO</label><input type="radio" name="11030003" id="1103000304" value="NADA SATISFECHO"><label for="1103000304">NADA SATISFECHO</label></fieldset></div></td></tr></tbody></table></div><div id='div_ratificado'><div id="div12020100"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>17. ¿Ha participado en el proceso de inducción para directores y subdirectores convocado por el MINEDU?</legend><input type="radio" name="12020100" id="1202010001" value="SI"><label for="1202010001">SI</label><input type="radio" name="12020100" id="1202010002" value="NO"><label for="1202010002">NO</label></fieldset></div><div id='div12020110'><p>17.A ¿Ha participado en el proceso de inducción para directores y subdirectores convocado por el MINEDU?</p><div class="efi"><div id="div12020101"  class=" ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend>Inicial</legend><input type="radio" name="12020101" id="1202010101" value="SI"><label for="1202010101">SI</label><input type="radio" name="12020101" id="1202010102" value="NO"><label for="1202010102">NO</label></fieldset></div></div></div><div class="efp"><div id="div12020102"  class=" ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend>Primaria</legend><input type="radio" name="12020102" id="1202010201" value="SI"><label for="1202010201">SI</label><input type="radio" name="12020102" id="1202010202" value="NO"><label for="1202010202">NO</label></fieldset></div></div></div><div class="efs"><div id="div12020103"  class=" ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend>Secundaria</legend><input type="radio" name="12020103" id="1202010301" value="SI"><label for="1202010301">SI</label><input type="radio" name="12020103" id="1202010302" value="NO"><label for="1202010302">NO</label></fieldset></div></div></div></div><div id="div12020200"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>18. ¿Qué tan satisfecho se encuentra usted con la capacitación recibida?</legend><input type="radio" name="12020200" id="1202020001" value="MUY SATISFECHO"><label for="1202020001">MUY SATISFECHO</label><input type="radio" name="12020200" id="1202020002" value="SATISFECHO"><label for="1202020002">SATISFECHO</label><input type="radio" name="12020200" id="1202020003" value="POCO SATISFECHO"><label for="1202020003">POCO SATISFECHO</label><input type="radio" name="12020200" id="1202020004" value="NADA SATISFECHO"><label for="1202020004">NADA SATISFECHO</label></fieldset></div><div id='div12020120'><p>18.A ¿Qué tan satisfecho se encuentra usted con la capacitación recibida?</p><div class="xefi"><div id="div12020201"  class=" ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend>Inicial</legend><input type="radio" name="12020201" id="1202020101" value="MUY SATISFECHO"><label for="1202020101">MUY SATISFECHO</label><input type="radio" name="12020201" id="1202020102" value="SATISFECHO"><label for="1202020102">SATISFECHO</label><input type="radio" name="12020201" id="1202020103" value="POCO SATISFECHO"><label for="1202020103">POCO SATISFECHO</label><input type="radio" name="12020201" id="1202020104" value="NADA SATISFECHO"><label for="1202020104">NADA SATISFECHO</label></fieldset></div></div></div><div class="xefp"><div id="div12020202"  class=" ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend>Primaria</legend><input type="radio" name="12020202" id="1202020201" value="MUY SATISFECHO"><label for="1202020201">MUY SATISFECHO</label><input type="radio" name="12020202" id="1202020202" value="SATISFECHO"><label for="1202020202">SATISFECHO</label><input type="radio" name="12020202" id="1202020203" value="POCO SATISFECHO"><label for="1202020203">POCO SATISFECHO</label><input type="radio" name="12020202" id="1202020204" value="NADA SATISFECHO"><label for="1202020204">NADA SATISFECHO</label></fieldset></div></div></div><div class="xefs"><div id="div12020203"  class=" ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend>Secundaria</legend><input type="radio" name="12020203" id="1202020301" value="MUY SATISFECHO"><label for="1202020301">MUY SATISFECHO</label><input type="radio" name="12020203" id="1202020302" value="SATISFECHO"><label for="1202020302">SATISFECHO</label><input type="radio" name="12020203" id="1202020303" value="POCO SATISFECHO"><label for="1202020303">POCO SATISFECHO</label><input type="radio" name="12020203" id="1202020304" value="NADA SATISFECHO"><label for="1202020304">NADA SATISFECHO</label></fieldset></div></div></div></div></div><div id="div12010000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>19. ¿Cuál es el idioma principal en el que se  dictan las clases en el local escolar?</legend><input type="radio" name="12010000" id="1201000001" value="CASTELLANO"><label for="1201000001">CASTELLANO</label><input type="radio" name="12010000" id="1201000002" value="QUECHUA"><label for="1201000002">QUECHUA</label><input type="radio" name="12010000" id="1201000003" value="QUECHUA CHANKA"><label for="1201000003">QUECHUA CHANKA</label><input type="radio" name="12010000" id="1201000004" value="ACHUAR"><label for="1201000004">ACHUAR</label><input type="radio" name="12010000" id="1201000005" value="AIMARA"><label for="1201000005">AIMARA</label><input type="radio" name="12010000" id="1201000006" value="AMAHUACA"><label for="1201000006">AMAHUACA</label><input type="radio" name="12010000" id="1201000007" value="ARABELA"><label for="1201000007">ARABELA</label><input type="radio" name="12010000" id="1201000008" value="ASHANINKA"><label for="1201000008">ASHANINKA</label><input type="radio" name="12010000" id="1201000009" value="AWAJUN"><label for="1201000009">AWAJUN</label><input type="radio" name="12010000" id="12010000010" value="BORA"><label for="12010000010">BORA</label><input type="radio" name="12010000" id="12010000011" value="CAPAHUANA"><label for="12010000011">CAPAHUANA</label><input type="radio" name="12010000" id="12010000012" value="CASHINAHUA"><label for="12010000012">CASHINAHUA</label><input type="radio" name="12010000" id="12010000013" value="CAUQUI"><label for="12010000013">CAUQUI</label><input type="radio" name="12010000" id="12010000014" value="CHAMICURO"><label for="12010000014">CHAMICURO</label><input type="radio" name="12010000" id="12010000015" value="ESE EJA"><label for="12010000015">ESE EJA</label><input type="radio" name="12010000" id="12010000016" value="INHAPARI"><label for="12010000016">INHAPARI</label><input type="radio" name="12010000" id="12010000017" value="IQUITU"><label for="12010000017">IQUITU</label><input type="radio" name="12010000" id="12010000018" value="ISCONAHUA"><label for="12010000018">ISCONAHUA</label><input type="radio" name="12010000" id="12010000019" value="JAQARU"><label for="12010000019">JAQARU</label><input type="radio" name="12010000" id="12010000020" value="KAKATAIBO"><label for="12010000020">KAKATAIBO</label><input type="radio" name="12010000" id="12010000021" value="KAKINTE"><label for="12010000021">KAKINTE</label><input type="radio" name="12010000" id="12010000022" value="KANDOZI-CHAPRA"><label for="12010000022">KANDOZI-CHAPRA</label><input type="radio" name="12010000" id="12010000023" value="KUKAMA-KUKAMINIA"><label for="12010000023">KUKAMA-KUKAMINIA</label><input type="radio" name="12010000" id="12010000024" value="MADIJA(CULINA)"><label for="12010000024">MADIJA(CULINA)</label><input type="radio" name="12010000" id="12010000025" value="MAIJUNA"><label for="12010000025">MAIJUNA</label><input type="radio" name="12010000" id="12010000026" value="MATSES"><label for="12010000026">MATSES</label><input type="radio" name="12010000" id="12010000027" value="MATSIGENKA"><label for="12010000027">MATSIGENKA</label><input type="radio" name="12010000" id="12010000028" value="MUNICHE"><label for="12010000028">MUNICHE</label><input type="radio" name="12010000" id="12010000029" value="MURUI-MUINANI"><label for="12010000029">MURUI-MUINANI</label><input type="radio" name="12010000" id="12010000030" value="NANTI"><label for="12010000030">NANTI</label><input type="radio" name="12010000" id="12010000031" value="NOMATSIGENGA"><label for="12010000031">NOMATSIGENGA</label><input type="radio" name="12010000" id="12010000032" value="OCAINA"><label for="12010000032">OCAINA</label><input type="radio" name="12010000" id="12010000033" value="OMAGUA"><label for="12010000033">OMAGUA</label><input type="radio" name="12010000" id="12010000034" value="RESIGARO"><label for="12010000034">RESIGARO</label><input type="radio" name="12010000" id="12010000035" value="OTRO"><label for="12010000035">OTRO</label></fieldset></div><div id="div12010100"  class=" ff"  > <div data-role="fieldcontain"><label for="12010100"   >Especificar:</label><input   data-mini="true"   type="text" name="12010100" id="12010100" value=""   ></div></div><div id="div12020000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>20. ¿Los estudiantes duermen en el local escolar?</legend><input type="radio" name="12020000" id="1202000001" value="SI"><label for="1202000001">SI</label><input type="radio" name="12020000" id="1202000002" value="NO"><label for="1202000002">NO</label></fieldset></div><p>21. Por nivel educativo, indique usted:</p><table  class="ts1"><thead><tr><th class=''>Nivel</th><th class=''>21.A. Tipo de IE</th><th class=''>21.B. Categoria</th><th class=''>21.C. Nro Aulas Pedagogicas</th><th class=''>21.D. Nro de secciones en funcionamiento</th></tr></thead><tbody><tr class='efi'><td>Inicial</td>
+					<div id='div10000000'><p>12. Por nivel educativo ¿El local escolar cuenta con un espacio físico para las direcciones de la IE de:</p>
+						<div id="div10010000"  class="efi ff "  > 
+							<div data-role="fieldcontain">
+								<fieldset data-role="controlgroup" data-type="horizontal" >
+									<legend>Inicial</legend>
+									<input type="radio" name="10010000" id="1001000001" value="SI">
+									<label for="1001000001">SI</label><input type="radio" name="10010000" id="1001000002" value="NO">
+									<label for="1001000002">NO</label>
+								</fieldset>
+							</div>
+						</div>
+						<div id="div10020000"  class="efp ff"  > 
+							<div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal" >
+								<legend>Primaria</legend>
+								<input type="radio" name="10020000" id="1002000001" value="SI">
+								<label for="1002000001">SI</label>
+								<input type="radio" name="10020000" id="1002000002" value="NO">
+								<label for="1002000002">NO</label>
+							</fieldset>
+						</div>
+					</div>
+					<div id="div10030000"  class=" ff"  > 
+						<div data-role="fieldcontain">
+							<fieldset data-role="controlgroup" data-type="horizontal" >
+								<legend>Secundaria</legend>
+								<input type="radio" name="10030000" id="1003000001" value="SI">
+								<label for="1003000001">SI</label>
+								<input type="radio" name="10030000" id="1003000002" value="NO">
+								<label for="1003000002">NO</label>
+							</fieldset>
+						</div>
+					</div>
+				</div>
+
+				<p>13. En los últimos 12 meses la IE ¿Ha recibido visitas de inspección/supervisión por parte de la UGEL?</p>
+				<div id="div10040001"  class="efi ff"  > 
+					<div data-role="fieldcontain">
+						<fieldset data-role="controlgroup" data-type="horizontal" >
+							<legend>Inicial</legend><input type="radio" name="10040001" id="1004000101" value="SI"><label for="1004000101">SI</label><input type="radio" name="10040001" id="1004000102" value="NO"><label for="1004000102">NO</label></fieldset></div>
+						</div>
+						<div id="div10040002"  class="efp ff"  > 
+							<div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal" ><legend>Primaria</legend><input type="radio" name="10040002" id="1004000201" value="SI"><label for="1004000201">SI</label><input type="radio" name="10040002" id="1004000202" value="NO"><label for="1004000202">NO</label></fieldset></div></div>
+					<div id="div10040003"  class=" ff"  > 
+						<div data-role="fieldcontain">
+							<fieldset data-role="controlgroup" data-type="horizontal" ><legend>Secundaria</legend><input type="radio" name="10040003" id="1004000301" value="SI"><label for="1004000301">SI</label><input type="radio" name="10040003" id="1004000302" value="NO"><label for="1004000302">NO</label></fieldset></div>
+						</div>
+						<p>14. ¿Cuántas visitas ha recibido?</p>
+						<div id="div10050011"  class="efi ff"  > <div data-role="fieldcontain"><label for="10050011"   >Inicial</label><input  type="number"   pattern="[0-9]*" name="10050011" id="10050011" value=""   /></div>
+					</div>
+					<div id="div10050012"  class="efp ff"  > 
+						<div data-role="fieldcontain"><label for="10050012"   >Primaria</label><input  type="number"   pattern="[0-9]*" name="10050012" id="10050012" value=""   /></div></div>
+					<div id="div10050013"  class=" ff"  > 
+						<div data-role="fieldcontain">
+							<label for="10050013"   >Secundaria</label><input  type="number"   pattern="[0-9]*" name="10050013" id="10050013" value=""   />
+						</div>
+					</div>
+						<div id="div11000000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" >
+							<legend>15. Considera usted que las condiciones de trabajo son:</legend>
+							<input type="radio" name="11000000" id="1100000001" value="MUY BUENAS"><label for="1100000001">MUY BUENAS</label><input type="radio" name="11000000" id="1100000002" value="BUENAS"><label for="1100000002">BUENAS</label><input type="radio" name="11000000" id="1100000003" value="REGULAR"><label for="1100000003">REGULAR</label><input type="radio" name="11000000" id="1100000004" value="MALO"><label for="1100000004">MALO</label><input type="radio" name="11000000" id="1100000005" value="MUY MALO"><label for="1100000005">MUY MALO</label></fieldset>
+						</div>
+						<!--div id='div11010000'>
+								<p>15.A. ¿Considera usted que las condiciones de su trabajo son?:</p>
+						<table  class="ts1">
+							<thead>
+								<tr>
+									<th class='efi'>Inicial</th>
+									<th class='efp'>Primaria</th>
+									<th class=''>Secundaria</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td class="efi">
+										<div id="div11010001"  class=" ff"  > <fieldset data-role="controlgroup"  data-mini="true"   >
+											<legend></legend>
+											<input type="radio" name="11010001" id="1101000101" value="MUY BUENAS">
+											<label for="1101000101">MUY BUENAS</label>
+											<input type="radio" name="11010001" id="1101000102" value="BUENAS">
+											<label for="1101000102">BUENAS</label>
+											<input type="radio" name="11010001" id="1101000103" value="REGULAR">
+											<label for="1101000103">REGULAR</label><input type="radio" name="11010001" id="1101000104" value="MALO"><label for="1101000104">MALO</label><input type="radio" name="11010001" id="1101000105" value="MUY MALO"><label for="1101000105">MUY MALO</label></fieldset>
+										</div>
+									</td>
+									<td class="efp">
+										<div id="div11010002"  class=" ff"  > 
+											<fieldset data-role="controlgroup"  data-mini="true"   >
+												<legend></legend>
+												<input type="radio" name="11010002" id="1101000201" value="MUY BUENAS"><label for="1101000201">MUY BUENAS</label><input type="radio" name="11010002" id="1101000202" value="BUENAS"><label for="1101000202">BUENAS</label><input type="radio" name="11010002" id="1101000203" value="REGULAR"><label for="1101000203">REGULAR</label><input type="radio" name="11010002" id="1101000204" value="MALO"><label for="1101000204">MALO</label><input type="radio" name="11010002" id="1101000205" value="MUY MALO"><label for="1101000205">MUY MALO</label>
+											</fieldset>
+										</div>
+									</td>
+									<td class="">
+										<div id="div11010003"  class=" ff"  > 
+											<fieldset data-role="controlgroup"  data-mini="true"   >
+												<legend></legend>
+												<input type="radio" name="11010003" id="1101000301" value="MUY BUENAS">
+												<label for="1101000301">MUY BUENAS</label><input type="radio" name="11010003" id="1101000302" value="BUENAS"><label for="1101000302">BUENAS</label>
+												<input type="radio" name="11010003" id="1101000303" value="REGULAR"><label for="1101000303">REGULAR</label><input type="radio" name="11010003" id="1101000304" value="MALO"><label for="1101000304">MALO</label><input type="radio" name="11010003" id="1101000305" value="MUY MALO"><label for="1101000305">MUY MALO</label>
+											</fieldset>
+										</div>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div-->
+
+					<div id="div11020000"  class=" ff"  > 
+						<fieldset data-role="controlgroup" data-type="horizontal" ><legend>16. ¿Qué tan satisfecho se encuentra Ud con su trabajo como director?</legend>
+							<input type="radio" name="11020000" id="1102000001" value="MUY SATISFECHO"><label for="1102000001">MUY SATISFECHO</label><input type="radio" name="11020000" id="1102000002" value="SATISFECHO"><label for="1102000002">SATISFECHO</label><input type="radio" name="11020000" id="1102000003" value="POCO SATISFECHO"><label for="1102000003">POCO SATISFECHO</label><input type="radio" name="11020000" id="1102000004" value="NADA SATISFECHO"><label for="1102000004">NADA SATISFECHO</label></fieldset></div><div id='div11030000'>
+								<!--p>16.A. ¿Que tan satisfecho se encuentra Ud con su trabajo como director?</p>
+								<table  class="ts1"><thead><tr><th class='efi'>Inicial</th><th class='efp'>Primaria</th><th class='efs'>Secundaria</th></tr></thead><tbody><tr>
+									<td class="efi"><div id="div11030001"  class=" ff"  > <fieldset data-role="controlgroup"  data-mini="true"   ><legend></legend><input type="radio" name="11030001" id="1103000101" value="MUY SATISFECHO"><label for="1103000101">MUY SATISFECHO</label><input type="radio" name="11030001" id="1103000102" value="SATISFECHO"><label for="1103000102">SATISFECHO</label><input type="radio" name="11030001" id="1103000103" value="POCO SATISFECHO"><label for="1103000103">POCO SATISFECHO</label><input type="radio" name="11030001" id="1103000104" value="NADA SATISFECHO"><label for="1103000104">NADA SATISFECHO</label></fieldset></div>
+									</td><td class="efp"><div id="div11030002"  class=" ff"  > <fieldset data-role="controlgroup"  data-mini="true"   ><legend></legend><input type="radio" name="11030002" id="1103000201" value="MUY SATISFECHO"><label for="1103000201">MUY SATISFECHO</label><input type="radio" name="11030002" id="1103000202" value="SATISFECHO"><label for="1103000202">SATISFECHO</label><input type="radio" name="11030002" id="1103000203" value="POCO SATISFECHO"><label for="1103000203">POCO SATISFECHO</label>
+									<input type="radio" name="11030002" id="1103000204" value="NADA SATISFECHO"><label for="1103000204">NADA SATISFECHO</label></fieldset></div></td>
+									<td class="efs"><div id="div11030003"  class=" ff"  > <fieldset data-role="controlgroup"  data-mini="true"   ><legend></legend><input type="radio" name="11030003" id="1103000301" value="MUY SATISFECHO"><label for="1103000301">MUY SATISFECHO</label><input type="radio" name="11030003" id="1103000302" value="SATISFECHO"><label for="1103000302">SATISFECHO</label><input type="radio" name="11030003" id="1103000303" value="POCO SATISFECHO"><label for="1103000303">POCO SATISFECHO</label><input type="radio" name="11030003" id="1103000304" value="NADA SATISFECHO"><label for="1103000304">NADA SATISFECHO</label></fieldset></div>
+									</td></tr></tbody></table-->
+
+
+								</div><div id='div_ratificado'><div id="div12020100"  class=" ff"  > 
+									<fieldset data-role="controlgroup" data-type="horizontal" >
+										<legend>17. ¿Ha participado en el proceso de inducción para directores y subdirectores convocado por el MINEDU?</legend><input type="radio" name="12020100" id="1202010001" value="SI"><label for="1202010001">SI</label><input type="radio" name="12020100" id="1202010002" value="NO"><label for="1202010002">NO</label></fieldset></div><div id='div12020110'>
+										<p>17.A ¿Ha participado en el proceso de inducción para directores y subdirectores convocado por el MINEDU?</p><div class="efi"><div id="div12020101"  class=" ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend>Inicial</legend><input type="radio" name="12020101" id="1202010101" value="SI"><label for="1202010101">SI</label><input type="radio" name="12020101" id="1202010102" value="NO"><label for="1202010102">NO</label></fieldset></div></div></div><div class="efp"><div id="div12020102"  class=" ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend>Primaria</legend><input type="radio" name="12020102" id="1202010201" value="SI"><label for="1202010201">SI</label><input type="radio" name="12020102" id="1202010202" value="NO"><label for="1202010202">NO</label></fieldset></div></div></div>
+									<div class="efs"><div id="div12020103"  class=" ff"  >
+										 <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend>Secundaria</legend><input type="radio" name="12020103" id="1202010301" value="SI"><label for="1202010301">SI</label><input type="radio" name="12020103" id="1202010302" value="NO"><label for="1202010302">NO</label></fieldset></div></div></div></div><div id="div12020200"  class=" ff"  > 
+										<fieldset data-role="controlgroup" data-type="horizontal" ><legend>18. ¿Qué tan satisfecho se encuentra usted con la capacitación recibida?</legend>
+											<input type="radio" name="12020200" id="1202020001" value="MUY SATISFECHO"><label for="1202020001">MUY SATISFECHO</label><input type="radio" name="12020200" id="1202020002" value="SATISFECHO"><label for="1202020002">SATISFECHO</label><input type="radio" name="12020200" id="1202020003" value="POCO SATISFECHO"><label for="1202020003">POCO SATISFECHO</label><input type="radio" name="12020200" id="1202020004" value="NADA SATISFECHO"><label for="1202020004">NADA SATISFECHO</label></fieldset></div><div id='div12020120'>
+										<p>18.A ¿Qué tan satisfecho se encuentra usted con la capacitación recibida?</p><div class="xefi"><div id="div12020201"  class=" ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend>Inicial</legend><input type="radio" name="12020201" id="1202020101" value="MUY SATISFECHO"><label for="1202020101">MUY SATISFECHO</label><input type="radio" name="12020201" id="1202020102" value="SATISFECHO"><label for="1202020102">SATISFECHO</label><input type="radio" name="12020201" id="1202020103" value="POCO SATISFECHO"><label for="1202020103">POCO SATISFECHO</label><input type="radio" name="12020201" id="1202020104" value="NADA SATISFECHO"><label for="1202020104">NADA SATISFECHO</label></fieldset></div></div></div><div class="xefp"><div id="div12020202"  class=" ff"  > <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend>Primaria</legend><input type="radio" name="12020202" id="1202020201" value="MUY SATISFECHO"><label for="1202020201">MUY SATISFECHO</label><input type="radio" name="12020202" id="1202020202" value="SATISFECHO"><label for="1202020202">SATISFECHO</label><input type="radio" name="12020202" id="1202020203" value="POCO SATISFECHO"><label for="1202020203">POCO SATISFECHO</label><input type="radio" name="12020202" id="1202020204" value="NADA SATISFECHO"><label for="1202020204">NADA SATISFECHO</label></fieldset></div></div></div>
+									<div class="efs">
+										<div id="div12020203"  class=" ff"  >
+										 <div data-role="fieldcontain"><fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend>Secundaria</legend><input type="radio" name="12020203" id="1202020301" value="MUY SATISFECHO"><label for="1202020301">MUY SATISFECHO</label><input type="radio" name="12020203" id="1202020302" value="SATISFECHO"><label for="1202020302">SATISFECHO</label><input type="radio" name="12020203" id="1202020303" value="POCO SATISFECHO"><label for="1202020303">POCO SATISFECHO</label><input type="radio" name="12020203" id="1202020304" value="NADA SATISFECHO"><label for="1202020304">NADA SATISFECHO</label></fieldset></div></div>
+										</div>
+									</div>
+								</div>
+										 <div id="div12010000"  class=" ff"  > 
+											<fieldset data-role="controlgroup" data-type="horizontal" ><legend>19. ¿Cuál es el idioma principal en el que se  dictan las clases en el local escolar?</legend>
+												<input type="radio" name="12010000" id="1201000001" value="CASTELLANO"><label for="1201000001">CASTELLANO</label><input type="radio" name="12010000" id="1201000002" value="QUECHUA"><label for="1201000002">QUECHUA</label><input type="radio" name="12010000" id="1201000003" value="QUECHUA CHANKA"><label for="1201000003">QUECHUA CHANKA</label><input type="radio" name="12010000" id="1201000004" value="ACHUAR"><label for="1201000004">ACHUAR</label><input type="radio" name="12010000" id="1201000005" value="AIMARA"><label for="1201000005">AIMARA</label><input type="radio" name="12010000" id="1201000006" value="AMAHUACA"><label for="1201000006">AMAHUACA</label><input type="radio" name="12010000" id="1201000007" value="ARABELA"><label for="1201000007">ARABELA</label><input type="radio" name="12010000" id="1201000008" value="ASHANINKA"><label for="1201000008">ASHANINKA</label>
+											<input type="radio" name="12010000" id="1201000009" value="AWAJUN"><label for="1201000009">AWAJUN</label><input type="radio" name="12010000" id="12010000010" value="BORA"><label for="12010000010">BORA</label><input type="radio" name="12010000" id="12010000011" value="CAPAHUANA"><label for="12010000011">CAPAHUANA</label><input type="radio" name="12010000" id="12010000012" value="CASHINAHUA"><label for="12010000012">CASHINAHUA</label><input type="radio" name="12010000" id="12010000013" value="CAUQUI"><label for="12010000013">CAUQUI</label><input type="radio" name="12010000" id="12010000014" value="CHAMICURO"><label for="12010000014">CHAMICURO</label><input type="radio" name="12010000" id="12010000015" value="ESE EJA"><label for="12010000015">ESE EJA</label><input type="radio" name="12010000" id="12010000016" value="INHAPARI"><label for="12010000016">INHAPARI</label><input type="radio" name="12010000" id="12010000017" value="IQUITU"><label for="12010000017">IQUITU</label><input type="radio" name="12010000" id="12010000018" value="ISCONAHUA"><label for="12010000018">ISCONAHUA</label><input type="radio" name="12010000" id="12010000019" value="JAQARU"><label for="12010000019">JAQARU</label><input type="radio" name="12010000" id="12010000020" value="KAKATAIBO"><label for="12010000020">KAKATAIBO</label><input type="radio" name="12010000" id="12010000021" value="KAKINTE"><label for="12010000021">KAKINTE</label><input type="radio" name="12010000" id="12010000022" value="KANDOZI-CHAPRA"><label for="12010000022">KANDOZI-CHAPRA</label><input type="radio" name="12010000" id="12010000023" value="KUKAMA-KUKAMINIA"><label for="12010000023">KUKAMA-KUKAMINIA</label><input type="radio" name="12010000" id="12010000024" value="MADIJA(CULINA)"><label for="12010000024">MADIJA(CULINA)</label>
+											<input type="radio" name="12010000" id="12010000025" value="MAIJUNA"><label for="12010000025">MAIJUNA</label><input type="radio" name="12010000" id="12010000026" value="MATSES"><label for="12010000026">MATSES</label><input type="radio" name="12010000" id="12010000027" value="MATSIGENKA"><label for="12010000027">MATSIGENKA</label><input type="radio" name="12010000" id="12010000028" value="MUNICHE"><label for="12010000028">MUNICHE</label><input type="radio" name="12010000" id="12010000029" value="MURUI-MUINANI"><label for="12010000029">MURUI-MUINANI</label>
+											<input type="radio" name="12010000" id="12010000030" value="NANTI"><label for="12010000030">NANTI</label><input type="radio" name="12010000" id="12010000031" value="NOMATSIGENGA"><label for="12010000031">NOMATSIGENGA</label><input type="radio" name="12010000" id="12010000032" value="OCAINA"><label for="12010000032">OCAINA</label><input type="radio" name="12010000" id="12010000033" value="OMAGUA"><label for="12010000033">OMAGUA</label><input type="radio" name="12010000" id="12010000034" value="RESIGARO"><label for="12010000034">RESIGARO</label><input type="radio" name="12010000" id="12010000035" value="OTRO"><label for="12010000035">OTRO</label></fieldset>
+										</div>
+										<div id="div12010100"  class=" ff"  >
+											 <div data-role="fieldcontain"><label for="12010100"   >Especificar:</label><input   data-mini="true"   type="text" name="12010100" id="12010100" value=""   ></div>
+										</div>
+										<div id="div12020000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>20. ¿Los estudiantes duermen en el local escolar?</legend><input type="radio" name="12020000" id="1202000001" value="SI"><label for="1202000001">SI</label><input type="radio" name="12020000" id="1202000002" value="NO"><label for="1202000002">NO</label></fieldset>
+											</div>
+									<!--
+										 <p>21. Por nivel educativo, indique usted:</p>
+									<table  class="ts1">
+										<thead><tr><th class=''>Nivel</th><th class=''>21.A. Tipo de IE</th><th class=''>21.B. Categoria</th><th class=''>21.C. Nro Aulas Pedagogicas</th>
+											<th class=''>21.D. Nro de secciones en funcionamiento</th></tr></thead><tbody><tr class='efi'>
+										<td>Inicial</td>
 <td><div id="div13010001"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal"  data-mini="true"  ><legend></legend><input type="radio" name="13010001" id="1301000101" value="IE-MONOLINGUE"><label for="1301000101">IE-MONOLINGUE</label><input type="radio" name="13010001" id="1301000102" value="IE-EIB"><label for="1301000102">IE-EIB</label></fieldset></div></td>
 <td><div class="ff" id="div13020001" > <label for='13020001'  class="ui-hidden-accessible" ></label><select name='13020001' id='13020001'  data-mini="true"   ><option value='--SELECCIONAR--'>--SELECCIONAR--</option><option value='MULTIEDAD'>MULTIEDAD</option><option value='UNIDOCENTE'>UNIDOCENTE</option><option value='POLIDOCENTE'>POLIDOCENTE</option></select></div></td>
 <td><div id="div13030001"  class=" ff"  > <label for="13030001"  class="ui-hidden-accessible" ></label><input  type="number"   data-mini="true"   pattern="[0-9]*" name="13030001" id="13030001" value=""   /></div></td>
@@ -5718,7 +6229,13 @@ input[type=text]{width:100%}
 <td><div class="ff" id="div13020003" > <label for='13020003'  class="ui-hidden-accessible" ></label><select name='13020003' id='13020003'  data-mini="true"   ><option value='--SELECCIONAR--'>--SELECCIONAR--</option><option value='POLIDOCENTE'>POLIDOCENTE</option><option value='MULTIGRADO'>MULTIGRADO</option></select></div></td>
 <td><div id="div13030003"  class=" ff"  > <label for="13030003"  class="ui-hidden-accessible" ></label><input  type="number"   data-mini="true"   pattern="[0-9]*" name="13030003" id="13030003" value=""   /></div></td>
 <td><div id="div13040003"  class=" ff"  > <label for="13040003"  class="ui-hidden-accessible" ></label><input  type="number"   data-mini="true"   pattern="[0-9]*" name="13040003" id="13040003" value=""   /></div></td>
-</tr></tbody></table><p>22. Sobre el horario escolar de los estudiantes, indique usted:</p><table class='ts1'><thead><tr><th>22.A Turnos de clases</th><th  colspan='2'>22.B Hora de inicio de clases</th><th colspan='2'>22.C Hora de término de clases</th></tr><tr><th></th><th>Hora</th><th>Minuto</th><th>Hora</th><th>Minuto</th></tr></thead></tbody><tr class='efi'><td colspan='6'><div class='cs1'>1. Inicial</div></td></tr><tr class='efi'><td><div id="div14010101"  class=" ff"  > <fieldset data-role="controlgroup"   data-mini="true"    ><legend></legend><input type="checkbox" name="14010101" id="1401010101" value="MAÑANA"><label for="1401010101" >MAÑANA</label></fieldset></div></td>
+</tr></tbody>
+</table>
+<p>22. Sobre el horario escolar de los estudiantes, indique usted:</p>
+<table class='ts1'>
+	<thead><tr><th>22.A Turnos de clases</th><th  colspan='2'>22.B Hora de inicio de clases</th><th colspan='2'>22.C Hora de término de clases</th></tr><tr><th></th><th>Hora</th><th>Minuto</th><th>Hora</th><th>Minuto</th></tr>
+	</thead><tbody>
+	<tr class='efi'><td colspan='6'><div class='cs1'>1. Inicial</div></td></tr><tr class='efi'><td><div id="div14010101"  class=" ff"  > <fieldset data-role="controlgroup"   data-mini="true"    ><legend></legend><input type="checkbox" name="14010101" id="1401010101" value="MAÑANA"><label for="1401010101" >MAÑANA</label></fieldset></div></td>
 <td><div id="div14010301"  class=" ff"  > <label for="14010301"  class="ui-hidden-accessible" ></label><input  type="number"   data-mini="true"   pattern="[0-9]*" name="14010301" id="14010301" value=""  maxlength='2' min='0' max='24'   /></div></td>
 <td><div id="div14010401"  class=" ff"  > <label for="14010401"  class="ui-hidden-accessible" ></label><input  type="number"   data-mini="true"   pattern="[0-9]*" name="14010401" id="14010401" value=""  maxlength='2' min='0' max='24'   /></div></td>
 <td><div id="div14010501"  class=" ff"  > <label for="14010501"  class="ui-hidden-accessible" ></label><input  type="number"   data-mini="true"   pattern="[0-9]*" name="14010501" id="14010501" value=""   /></div></td>
@@ -5758,7 +6275,24 @@ input[type=text]{width:100%}
 <td><div id="div14030403"  class=" ff"  > <label for="14030403"  class="ui-hidden-accessible" ></label><input  type="number"   data-mini="true"   pattern="[0-9]*" name="14030403" id="14030403" value=""  maxlength='2' min='0' max='24'   /></div></td>
 <td><div id="div14030503"  class=" ff"  > <label for="14030503"  class="ui-hidden-accessible" ></label><input  type="number"   data-mini="true"   pattern="[0-9]*" name="14030503" id="14030503" value=""   /></div></td>
 <td><div id="div14030603"  class=" ff"  > <label for="14030603"  class="ui-hidden-accessible" ></label><input  type="number"   data-mini="true"   pattern="[0-9]*" name="14030603" id="14030603" value=""   /></div></td>
-</tr></tbody></table><p>23. ¿Cuál es la duración en minutos de las siguientes actividades?</p><table class='ts1'><thead><tr><th>Actividad</th><th  colspan='3'>Tiempo en Minutos</th></tr><tr><th></th><th class='efi'>Inicial</th><th class='efp'>Primaria</th><th class='efs'>Secundaria</th></tr></thead></tbody><tr class=''><td  >¿Desayuno escolar?</td>
+</tr></tbody></table>
+
+<p>23. ¿Cuál es la duración en minutos de las siguientes actividades?</p>
+<table class='ts1'>
+	<thead>
+		<tr>
+			<th>Actividad</th>
+			<th  colspan='3'>Tiempo en Minutos</th>
+		</tr>
+		<tr>
+			<th></th>
+			<th class='efi'>Inicial</th>
+			<th class='efp'>Primaria</th>
+			<th class='efs'>Secundaria</th>
+		</tr>
+	</thead>
+</tbody>
+	<tr class=''><td  >¿Desayuno escolar?</td>
 <td class='efi' ><div id="div14100101"  class=" ff"  > <label for="14100101"  class="ui-hidden-accessible" ></label><input  type="number"   pattern="[0-9]*" name="14100101" id="14100101" value=""   /></div></td>
 <td class='efp' ><div id="div14100102"  class=" ff"  > <label for="14100102"  class="ui-hidden-accessible" ></label><input  type="number"   pattern="[0-9]*" name="14100102" id="14100102" value=""   /></div></td>
 <td class='efs' ><div id="div14100103"  class=" ff"  > <label for="14100103"  class="ui-hidden-accessible" ></label><input  type="number"   pattern="[0-9]*" name="14100103" id="14100103" value=""   /></div></td>
@@ -5775,6 +6309,8 @@ input[type=text]{width:100%}
 <td class='efp' ><div id="div14100402"  class=" ff"  > <label for="14100402"  class="ui-hidden-accessible" ></label><input  type="number"   pattern="[0-9]*" name="14100402" id="14100402" value=""   /></div></td>
 <td class='efs' ><div id="div14100403"  class=" ff"  > <label for="14100403"  class="ui-hidden-accessible" ></label><input  type="number"   pattern="[0-9]*" name="14100403" id="14100403" value=""   /></div></td>
 </tr></tbody></table>
+-->
+
 				</div>				
 			</div>
 			<a href="#" onclick="return nextpage_encuesta(7);"  class="sgte ui-btn ui-icon-carat-r ui-btn-icon-right">Siguiente</a>
@@ -5786,7 +6322,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta7" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 7 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -5886,7 +6422,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta8" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 8 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6148,7 +6684,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta9" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 9 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6213,7 +6749,8 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta10" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+			<a href="#recordBtn" onclick='return buttonAudio(this);' class="ui-btn-left ui-btn ui-icon-audio ui-btn-icon-notext ui-shadow ui-btn-corner-all bw" title="Record" data-role="button">Record</a>
+<h1 role="heading"> Pagina 10 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6277,7 +6814,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta11" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 11 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6320,7 +6857,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta12" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 12 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6435,7 +6972,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta13" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 13 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6457,7 +6994,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta14" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 14 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6479,7 +7016,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta15" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 15 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6501,7 +7038,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta16" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 16 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6523,7 +7060,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta17" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 17 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6641,7 +7178,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta18" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 18 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6651,9 +7188,103 @@ input[type=text]{width:100%}
 					<h3>XVI. MANTENIMIENTO DEL LOCAL ESCOLAR </h3>
 				</div>
 				<div class="ui-body ui-body-a">
-					<div id="div40010000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>70. En el presente año lectivo, a través del Ministerio de Educación,¿ El local escolar ha recibido la transferencia de dinero para realizar
-		 obras de mantenimiento?</legend><input type="radio" name="40010000" id="4001000001" value="SI"><label for="4001000001">SI</label><input type="radio" name="40010000" id="4001000002" value="NO"><label for="4001000002">NO</label><input type="radio" name="40010000" id="4001000003" value="NO SABE"><label for="4001000003">NO SABE</label></fieldset></div><div id='mantenimiento'><div id="div39010000"  class=" ff"  > <fieldset data-role="controlgroup"  ><legend>71. ¿Quién es el responsable de la ejecución de las obras de mantenimiento en su local escolar?
-	</legend><input type="radio" name="39010000" id="3901000001" value="Director"><label for="3901000001">Director</label><input type="radio" name="39010000" id="3901000002" value="Docente/Docente encargado"><label for="3901000002">Docente/Docente encargado</label><input type="radio" name="39010000" id="3901000003" value="Personal designado por UGEL/DRE"><label for="3901000003">Personal designado por UGEL/DRE</label><input type="radio" name="39010000" id="3901000004" value="Director UGEL/DRE"><label for="3901000004">Director UGEL/DRE</label><input type="radio" name="39010000" id="3901000005" value="Otro"><label for="3901000005">Otro</label></fieldset></div><div id="div39011100"  class=" ff"  > <div data-role="fieldcontain"><label for="39011100"   > Otro (especifique):</label><input   data-mini="true"   type="text" name="39011100" id="39011100" value=""   ></div></div><div id="div41010000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>72. ¿Ha registrado la ficha de mantenimiento?</legend><input type="radio" name="41010000" id="4101000001" value="SI"><label for="4101000001">SI</label><input type="radio" name="41010000" id="4101000002" value="NO"><label for="4101000002">NO</label><input type="radio" name="41010000" id="4101000003" value="NO SABE"><label for="4101000003">NO SABE</label></fieldset></div><div id='mantficha'><div id="div42010000"  class=" ff"  > <fieldset data-role="controlgroup" data-type="horizontal" ><legend>73. ¿Está ejecutando el presupuesto de mantenimiento?</legend><input type="radio" name="42010000" id="4201000001" value="SI"><label for="4201000001">SI</label><input type="radio" name="42010000" id="4201000002" value="NO"><label for="4201000002">NO</label></fieldset></div><div id="div43010000"  class=" ff"  > <fieldset data-role="controlgroup"  ><legend>74. ¿Por qué no lo ha ejecutado?</legend><input type="radio" name="43010000" id="4301000001" value="El local escolar es nuevo y no necesita mantenimiento"><label for="4301000001">El local escolar es nuevo y no necesita mantenimiento</label><input type="radio" name="43010000" id="4301000002" value="Se está reconstruyendo el local escolar"><label for="4301000002">Se está reconstruyendo el local escolar</label><input type="radio" name="43010000" id="4301000003" value="Institución educativa fusionada"><label for="4301000003">Institución educativa fusionada</label><input type="radio" name="43010000" id="4301000004" value="La I.E funciona en un local alquilado/prestado"><label for="4301000004">La I.E funciona en un local alquilado/prestado</label><input type="radio" name="43010000" id="4301000005" value="El dinero no llegó al responsable de las obras de mantenimiento"><label for="4301000005">El dinero no llegó al responsable de las obras de mantenimiento</label><input type="radio" name="43010000" id="4301000006" value="Otros"><label for="4301000006">Otros</label></fieldset></div><div id="div43010100"  class=" ff"  > <div data-role="fieldcontain"><label for="43010100"   >Especificar:</label><input   data-mini="true"   type="text" name="43010100" id="43010100" value=""   ></div></div><div id="div44010000"  class=" ff"  > <fieldset data-role="controlgroup"    ><legend>75. ¿Qué acciones de mantenimiento se han ejecutado o vienen ejecutándose en el local escolar?</legend><input type="checkbox" name="44010001" id="4401000001" value="Reparación de techos"><label for="4401000001" >Reparación de techos</label><input type="checkbox" name="44010002" id="4401000002" value="Reparación de instalaciones sanitarias"><label for="4401000002" >Reparación de instalaciones sanitarias</label><input type="checkbox" name="44010003" id="4401000003" value="Reparación de pisos"><label for="4401000003" >Reparación de pisos</label><input type="checkbox" name="44010004" id="4401000004" value="Reparación de paredes"><label for="4401000004" >Reparación de paredes</label><input type="checkbox" name="44010005" id="4401000005" value="Reparación de puertas"><label for="4401000005" >Reparación de puertas</label><input type="checkbox" name="44010006" id="4401000006" value="Reparación de ventanas"><label for="4401000006" >Reparación de ventanas</label><input type="checkbox" name="44010007" id="4401000007" value="Reparación de instalaciones electricas"><label for="4401000007" >Reparación de instalaciones electricas</label><input type="checkbox" name="44010008" id="4401000008" value="Reparación de mobiliario escolar"><label for="4401000008" >Reparación de mobiliario escolar</label><input type="checkbox" name="44010009" id="4401000009" value="Reposición de mobiliario escolar"><label for="4401000009" >Reposición de mobiliario escolar</label><input type="checkbox" name="44010010" id="4401000010" value="Pintado"><label for="4401000010" >Pintado</label></fieldset></div></div></div>
+					<div id="div40010000"  class=" ff"  > 
+						<fieldset data-role="controlgroup" data-type="horizontal" >
+							<legend>70. En el presente año lectivo, a través del Ministerio de Educación,¿ El local escolar ha recibido la transferencia de dinero para realizar obras de mantenimiento?</legend>
+		 <input type="radio" name="40010000" id="4001000001" value="SI">
+		 <label for="4001000001">SI</label>
+		 <input type="radio" name="40010000" id="4001000002" value="NO">
+		 <label for="4001000002">NO</label>
+		 <input type="radio" name="40010000" id="4001000003" value="NO SABE">
+		 <label for="4001000003">NO SABE</label>
+		</fieldset>
+	</div>
+	<div id='mantenimiento'><div id="div39010000"  class=" ff"  > <fieldset data-role="controlgroup"  ><legend>71. ¿Quién es el responsable de la ejecución de las obras de mantenimiento en su local escolar?
+	</legend>
+	<input type="radio" name="39010000" id="3901000001" value="Director">
+	<label for="3901000001">Director</label>
+	<input type="radio" name="39010000" id="3901000002" value="Docente/Docente encargado">
+	<label for="3901000002">Docente/Docente encargado</label>
+	<input type="radio" name="39010000" id="3901000003" value="Personal designado por UGEL/DRE">
+	<label for="3901000003">Personal designado por UGEL/DRE</label>
+	<input type="radio" name="39010000" id="3901000004" value="Director UGEL/DRE">
+	<label for="3901000004">Director UGEL/DRE</label>
+	<input type="radio" name="39010000" id="3901000005" value="Otro">
+	<label for="3901000005">Otro</label>
+</fieldset>
+</div>
+<div id="div39011100"  class=" ff"  > 
+	<div data-role="fieldcontain">
+		<label for="39011100"   > Otro (especifique):</label>
+		<input   data-mini="true"   type="text" name="39011100" id="39011100" value=""   >
+	</div>
+</div>
+<div id="div41010000"  class=" ff"  > 
+	<fieldset data-role="controlgroup" data-type="horizontal" >
+		<legend>72. ¿Ha registrado la ficha de mantenimiento?</legend>
+		<input type="radio" name="41010000" id="4101000001" value="SI">
+		<label for="4101000001">SI</label>
+		<input type="radio" name="41010000" id="4101000002" value="NO">
+		<label for="4101000002">NO</label><input type="radio" name="41010000" id="4101000003" value="NO SABE">
+		<label for="4101000003">NO SABE</label>
+	</fieldset>
+</div>
+<div id='mantficha'><div id="div42010000"  class=" ff"  > 
+	<fieldset data-role="controlgroup" data-type="horizontal" >
+		<legend>73. ¿Está ejecutando el presupuesto de mantenimiento?</legend>
+		<input type="radio" name="42010000" id="4201000001" value="SI">
+		<label for="4201000001">SI</label>
+		<input type="radio" name="42010000" id="4201000002" value="NO">
+		<label for="4201000002">NO</label></fieldset>
+	</div>
+	<div id="div43010000"  class=" ff"  > 
+		<fieldset data-role="controlgroup"  >
+			<legend>74. ¿Por qué no lo ha ejecutado?</legend>
+			<input type="radio" name="43010000" id="4301000001" value="El local escolar es nuevo y no necesita mantenimiento">
+			<label for="4301000001">El local escolar es nuevo y no necesita mantenimiento</label>
+			<input type="radio" name="43010000" id="4301000002" value="Se está reconstruyendo el local escolar">
+			<label for="4301000002">Se está reconstruyendo el local escolar</label>
+			<input type="radio" name="43010000" id="4301000003" value="Institución educativa fusionada">
+			<label for="4301000003">Institución educativa fusionada</label>
+			<input type="radio" name="43010000" id="4301000004" value="La I.E funciona en un local alquilado/prestado">
+			<label for="4301000004">La I.E funciona en un local alquilado/prestado</label>
+			<input type="radio" name="43010000" id="4301000005" value="El dinero no llegó al responsable de las obras de mantenimiento">
+			<label for="4301000005">El dinero no llegó al responsable de las obras de mantenimiento</label>
+			<input type="radio" name="43010000" id="4301000006" value="Otros">
+			<label for="4301000006">Otros</label>
+		</fieldset>
+	</div>
+	<div id="div43010100"  class=" ff"  > 
+		<div data-role="fieldcontain">
+			<label for="43010100"   >Especificar:</label>
+			<input   data-mini="true"   type="text" name="43010100" id="43010100" value=""   >
+		</div>
+		</div>
+		<div id="div44010000"  class=" ff"  > <fieldset data-role="controlgroup"    >
+			<legend>75. ¿Qué acciones de mantenimiento se han ejecutado o vienen ejecutándose en el local escolar?</legend>
+			<input type="checkbox" name="44010001" id="4401000001" value="Reparación de techos">
+			<label for="4401000001" >Reparación de techos</label>
+			<input type="checkbox" name="44010002" id="4401000002" value="Reparación de instalaciones sanitarias">
+			<label for="4401000002" >Reparación de instalaciones sanitarias</label>
+			<input type="checkbox" name="44010003" id="4401000003" value="Reparación de pisos">
+			<label for="4401000003" >Reparación de pisos</label>
+			<input type="checkbox" name="44010004" id="4401000004" value="Reparación de paredes">
+			<label for="4401000004" >Reparación de paredes</label>
+			<input type="checkbox" name="44010005" id="4401000005" value="Reparación de puertas">
+			<label for="4401000005" >Reparación de puertas</label>
+			<input type="checkbox" name="44010006" id="4401000006" value="Reparación de ventanas">
+			<label for="4401000006" >Reparación de ventanas</label>
+			<input type="checkbox" name="44010007" id="4401000007" value="Reparación de instalaciones electricas">
+			<label for="4401000007" >Reparación de instalaciones electricas</label>
+			<input type="checkbox" name="44010008" id="4401000008" value="Reparación de mobiliario escolar">
+			<label for="4401000008" >Reparación de mobiliario escolar</label>
+			<input type="checkbox" name="44010009" id="4401000009" value="Reposición de mobiliario escolar">
+			<label for="4401000009" >Reposición de mobiliario escolar</label>
+			<input type="checkbox" name="44010010" id="4401000010" value="Pintado"><label for="4401000010" >Pintado</label>
+		</fieldset>
+	</div>
+</div>
+</div>
 				</div>				
 			</div>
 			<a href="#" onclick="return nextpage_encuesta(19);"  class="sgte ui-btn ui-icon-carat-r ui-btn-icon-right">Siguiente</a>
@@ -6665,7 +7296,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta19" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 19 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6696,7 +7327,8 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta20" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+			<a href="#recordBtn" onclick='return buttonAudio(this);' class="ui-btn-left ui-btn ui-icon-audio ui-btn-icon-notext ui-shadow ui-btn-corner-all bw" title="Record" data-role="button">Record</a>
+<h1 role="heading"> Pagina 20 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6718,7 +7350,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta21" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 21 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6740,7 +7372,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta22" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 22 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6770,7 +7402,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta23" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 23 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -6792,7 +7424,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta24" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 24 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -7018,7 +7650,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta25" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 25 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -7080,7 +7712,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta26" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 26 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -7110,7 +7742,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta27" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 27 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -7166,7 +7798,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta28" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 28 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -7206,7 +7838,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta29" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 29 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -7393,7 +8025,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta30" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 30 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -7428,7 +8060,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta31">
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 31 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -7449,7 +8081,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta32" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 32 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -7471,7 +8103,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta33" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 33 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -7493,7 +8125,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta34" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 34 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -7583,7 +8215,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta35" >
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 35 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
@@ -7605,7 +8237,7 @@ input[type=text]{width:100%}
 	<div data-role="page" id="encuesta36">
 		<form>
 		<div data-role="header" class="hpage1"  data-theme="b">
-<h1 role="heading"> </h1>
+<h1 role="heading"> Pagina 36 </h1>
 <a href="#rightpanel1" class="ui-btn-right ui-btn-corner-all ui-btn ui-icon-bars ui-btn-icon-notext ui-shadow bw" title=" Navigation " data-form="ui-icon" data-role="button" role="button"> Navigation </a>
 
 		</div>
